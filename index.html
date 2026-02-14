@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unteck Stories</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+
+body{
+    background:#f5f7fa;
+    color:#222;
+    transition:0.3s;
+}
+
+/* الوضع الليلي */
+.dark{
+    background:#111;
+    color:white;
+}
+
+.dark nav,
+.dark footer{
+    background:#1a1a1a;
+}
+
+.section{
+    display:none;
+    padding:120px 40px 60px;
+    min-height:100vh;
+}
+
+.active{
+    display:block;
+}
+
+nav{
+    position:fixed;
+    top:0;
+    width:100%;
+    background:white;
+    padding:15px 40px;
+    display:flex;
+    gap:10px;
+    z-index:1000;
+    transition:0.3s;
+}
+
+nav.scrolled{
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+button{
+    padding:8px 15px;
+    border:none;
+    background:#6a00ff;
+    color:white;
+    border-radius:20px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover{
+    background:#4b00b5;
+}
+
+.hero{
+    text-align:center;
+    margin-top:100px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:25px;
+    margin-top:40px;
+}
+
+.card{
+    background:white;
+    border-radius:15px;
+    overflow:hidden;
+    box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+.card img{
+    width:100%;
+    height:200px;
+    object-fit:cover;
+}
+
+.card-content{
+    padding:15px;
+}
+
+textarea{
+    width:100%;
+    min-height:300px;
+    padding:20px;
+    font-size:16px;
+    margin-bottom:15px;
+}
+
+input{
+    width:100%;
+    padding:10px;
+    margin:10px 0;
+}
+
+.paper{
+    background:white;
+    padding:20px;
+    border-radius:10px;
+}
+
+footer{
+    text-align:center;
+    padding:20px;
+    background:white;
+    margin-top:50px;
+}
+</style>
+</head>
+
+<body>
+
+<nav id="navbar">
+<button onclick="toggleDark()">🌙</button>
+<button onclick="showSection('home')">Home</button>
+<button onclick="showSection('write')">Write</button>
+<button onclick="showSection('preview')">Preview</button>
+</nav>
+
+<!-- HOME -->
+<section id="home" class="section active">
+<div class="hero">
+<h1>Write Your Story. Share Your World.</h1>
+<p>منصة حديثة لنشر القصص</p>
+</div>
+
+<div class="grid">
+<div class="card">
+<img src="https://picsum.photos/400/300?1">
+<div class="card-content">
+<h3>The Lost World</h3>
+<button onclick="showSection('reader')">Read</button>
+</div>
+</div>
+</div>
+</section>
+
+<!-- WRITE -->
+<section id="write" class="section">
+<div class="paper" id="paperContainer">
+<textarea oninput="checkLines(this)" placeholder="اكتب هنا..."></textarea>
+</div>
+
+<br>
+
+<input type="file" accept="image/*" onchange="addImage(event)">
+<br><br>
+
+<button onclick="goPreview()">تم</button>
+</section>
+
+
+<!-- PREVIEW -->
+<section id="preview" class="section">
+<div class="paper">
+<h3>معلومات القصة</h3>
+<input type="text" id="storyTitle" placeholder="اسم القصة">
+<input type="text" id="storyImage" placeholder="رابط صورة">
+<p id="pageCount"></p>
+<button onclick="publishStory()">نشر</button>
+</div>
+</section>
+
+<!-- READER -->
+<section id="reader" class="section">
+<div class="paper" id="readContent"></div>
+<button onclick="showSection('home')">رجوع</button>
+</section>
+
+<footer>
+نسخة التجريبي فقط
+<br>
+© 2026 Unteck Stories - Ibrahim kha
+</footer>
+
+<script>
+let storyContent = "";
+let storyImgData = "";
+let currentPages = [];
+let currentPageIndex = 0;
+
+// التنقل بين الأقسام
+function showSection(id){
+    document.querySelectorAll(".section").forEach(sec=>{
+        sec.classList.remove("active");
+    });
+    document.getElementById(id).classList.add("active");
+}
+
+// الوضع الليلي
+function toggleDark(){
+    document.body.classList.toggle("dark");
+}
+
+// عداد الأسطر
+function checkLines(textarea){
+    let lines = textarea.value.split("\n").length;
+    if(lines >= 20){
+        textarea.oninput = null; // نوقف التكرار
+        addPage();
+    }
+}
+
+// إنشاء صفحة جديدة
+function addPage(){
+    let newPage = document.createElement("textarea");
+    newPage.placeholder = "صفحة جديدة...";
+    newPage.oninput = function(){ checkLines(this); };
+    document.getElementById("paperContainer").appendChild(newPage);
+    newPage.focus();
+}
+
+// إضافة صورة
+function addImage(event){
+    let file = event.target.files[0];
+    if(!file) return;
+
+    let reader = new FileReader();
+    reader.onload = function(e){
+        storyImgData = e.target.result;
+        document.getElementById("previewImage").src = storyImgData;
+
+        let img = document.createElement("img");
+        img.src = storyImgData;
+        img.style.width = "100%";
+        img.style.margin = "15px 0";
+
+        document.getElementById("paperContainer").appendChild(img);
+    }
+    reader.readAsDataURL(file);
+}
+
+// المعاينة
+function goPreview(){
+    storyContent = document.getElementById("paperContainer").innerHTML;
+    document.getElementById("readContent").innerHTML = storyContent;
+    if(storyImgData){
+        document.getElementById("previewImage").src = storyImgData;
+    }
+    showSection("preview");
+}
+
+// نشر القصة
+function publishStory(){
+    let title = document.getElementById("storyTitle").value || "بدون عنوان";
+    let story = {
+        title: title,
+        content: storyContent,
+        image: storyImgData
+    };
+
+    let stories = JSON.parse(localStorage.getItem("stories") || "[]");
+    stories.push(story);
+    localStorage.setItem("stories", JSON.stringify(stories));
+
+    document.getElementById("paperContainer").innerHTML = '<textarea oninput="checkLines(this)" placeholder="اكتب هنا..."></textarea>';
+    document.getElementById("storyTitle").value = "";
+    document.getElementById("previewImage").src = "";
+    storyImgData = "";
+    storyContent = "";
+
+    loadStories();
+    showSection("home");
+}
+
+// تحميل القصص من التخزين
+function loadStories(){
+    let storyGrid = document.getElementById("storyGrid");
+    storyGrid.innerHTML = "";
+
+    let stories = JSON.parse(localStorage.getItem("stories") || "[]");
+
+    stories.forEach((s, index)=>{
+        let card = document.createElement("div");
+        card.classList.add("card");
+
+        let img = document.createElement("img");
+        img.src = s.image || "https://picsum.photos/400/300?random="+index;
+        img.onclick = ()=>{ showStory(s); };
+
+        let content = document.createElement("div");
+        content.classList.add("card-content");
+        content.innerHTML = `<h3>${s.title}</h3><button onclick="showStory(stories[${index}])">قراءة</button>`;
+
+        card.appendChild(img);
+        card.appendChild(content);
+        storyGrid.appendChild(card);
+    });
+}
+
+// عرض القصة مع الصفحات
+function showStory(story){
+    let tempDiv = document.createElement("div");
+    tempDiv.innerHTML = story.content;
+
+    currentPages = Array.from(tempDiv.children);
+    currentPageIndex = 0;
+
+    renderPage();
+    showSection("reader");
+}
+
+// عرض الصفحة الحالية
+function renderPage(){
+    let reader = document.getElementById("readContent");
+    reader.innerHTML = "";
+    if(currentPages.length === 0) return;
+
+    reader.appendChild(currentPages[currentPageIndex]);
+    document.getElementById("pageIndicator").textContent = `${currentPageIndex+1}/${currentPages.length}`;
+}
+
+// التنقل للصفحة التالية
+function nextPage(){
+    if(currentPageIndex < currentPages.length - 1){
+        currentPageIndex++;
+        renderPage();
+    }
+}
+
+// التنقل للصفحة السابقة
+function prevPage(){
+    if(currentPageIndex > 0){
+        currentPageIndex--;
+        renderPage();
+    }
+}
+
+// عند تحميل الصفحة
+window.onload = loadStories;
+</script>
+
+</body>
+</html>
